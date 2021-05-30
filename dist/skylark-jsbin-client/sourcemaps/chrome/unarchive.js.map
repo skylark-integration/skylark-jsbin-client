@@ -1,0 +1,1 @@
+{"version":3,"sources":["chrome/unarchive.js"],"names":["define","archive","bind"],"mappings":";;;;;;;AAAAA,QACC,aACC,SAASC,GAGV,OAFmBA,EAAQC,KAAK,MAAM","file":"../../chrome/unarchive.js","sourcesContent":["define([\r\n\t\"./archive\"\r\n],function(archive){\r\n    var unarchive = archive.bind(null, false);\r\n\r\n\treturn unarchive;\r\n});"]}
