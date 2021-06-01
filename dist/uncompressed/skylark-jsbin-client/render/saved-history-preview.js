@@ -13,7 +13,7 @@ define([
       requestAttempts = 5,
       $history; // set in hookUserHistory()
 
-  $document.on('history:open', function () {
+  jsbin.$document.on('history:open', function () {
     if ($history && jsbin.panels.getVisible().length === 0) {
       $history.appendTo('main');
     }
@@ -192,7 +192,7 @@ define([
       updateLayout($tbodys, false);
     }, 0);
 
-    $document.trigger('history:open');
+    jsbin.$document.trigger('history:open');
 
     return $history;
   };
@@ -227,7 +227,7 @@ define([
     $homebtn.on('click', loadList);
     $panelButtons.on('mousedown', panelCloseIntent);
 
-    $document.on('history:load', loadList);
+    jsbin.$document.on('history:load', loadList);
 
     if (!panelsVisible) {
       loadList();

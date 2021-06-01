@@ -44,7 +44,7 @@ define([
 
   // save the bin url when the bin is saved, changed and when we load first time
   if (jsbin && jsbin.getURL) {
-    $document.on('saved', save);
+    jsbin.$document.on('saved', save);
     save();
   } else {
     updateBackButton();

@@ -1,7 +1,9 @@
 define([
   "skylark-jquery",
-   "../jsbin"
-],function ($,jsbin) {
+   "../jsbin",
+   "./analytics",
+   "./archive"
+],function ($,jsbin,analytics, archive) {
   var $startingpoint = $('a.startingpoint').click(function (event) {
     event.preventDefault();
     if (localStorage) {
@@ -11,18 +13,18 @@ define([
       localStorage.setItem('saved-css', editors.css.getCode());
 
       localStorage.setItem('saved-processors', JSON.stringify({
-        javascript: jsbin.panels.panels.javascript.processor.id,
-        html: jsbin.panels.panels.html.processor.id,
-        css: jsbin.panels.panels.css.processor.id,
+        javascript: jsbin.panels.named.javascript.processor.id,
+        html: jsbin.panels.named.html.processor.id,
+        css: jsbin.panels.named.css.processor.id,
       }));
 
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'notification',
         content: 'Starting template updated and saved',
         autohide: 3000
       });
     } else {
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'error',
         content: 'Saving templates isn\'t supported in this browser I\'m afraid. Sorry'
       });
@@ -81,13 +83,13 @@ define([
 
   var $lockrevision = $('div.lockrevision').on('click', function (event) {
     event.preventDefault();
-    saveChecksum = false;
-    $document.trigger('locked');
+    jsbin.saveChecksum = false;
+    jsbin.$document.trigger('locked');
   }).on('mouseup', function () {
     return false;
   });
 
-  $document.on('locked', function () {
+  jsbin.$document.on('locked', function () {
     if (!$lockrevision.data('locked')) {
       analytics.lock();
       $lockrevision.removeClass('icon-unlocked').addClass('icon-lock');
@@ -99,7 +101,7 @@ define([
   // var $lockrevision = $('.lockrevision').on('click', function (event) {
   // });
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
     $lockrevision.removeClass('icon-lock').addClass('icon-unlocked').data('locked', false);
     $lockrevision.html('<span>Click to lock and prevent further changes</span>');
   });
@@ -248,7 +250,7 @@ define([
 
   $('#jsbinurl').click(function (e) {
     setTimeout(function () {
-      jsbin.panels.panels.live.hide();
+      jsbin.panels.named.live.hide();
     }, 0);
   });
 
@@ -334,8 +336,8 @@ define([
     // if nothing was shown, show html & live
     setTimeout(function () {
       if (jsbin.panels.getVisible().length === 0) {
-        jsbin.panels.panels.html.show();
-        jsbin.panels.panels.live.show();
+        jsbin.panels.named.html.show();
+        jsbin.panels.named.live.show();
       }
       window.location = jsbin.root;
     }, 0);
@@ -354,7 +356,7 @@ define([
       type: 'post',
       success: function (data) {
 
-        $document.trigger('tip', {
+        jsbin.$document.trigger('tip', {
           type: 'notification',
           content: 'This bin is now ' + visibility,
           autohide: 6000
@@ -386,7 +388,7 @@ define([
 
   // ignore for embed as there might be a lot of embeds on the page
   if (!jsbin.embed && store.sessionStorage.getItem('runnerPending')) {
-    $document.trigger('tip', {
+    jsbin.$document.trigger('tip', {
       content: 'It looks like your last session may have crashed, so I\'ve disabled "Auto-run JS" for you',
       type: 'error',
     });
@@ -452,7 +454,7 @@ define([
     // if not - insert
     // <meta name="description" content="" />
     // if meta description is in the HTML, highlight it
-    var editor = jsbin.panels.panels.html,
+    var editor = jsbin.panels.named.html,
         cm = editor.editor,
         html = editor.getCode();
 
@@ -505,13 +507,13 @@ define([
       url: this.href,
       data: { url: jsbin.getURL({ withRevision: true }) },
       success: function () {
-        $document.trigger('tip', {
+        jsbin.$document.trigger('tip', {
           type: 'notification',
           content: 'This bin is now published to your vanity URL: <a target="_blank" href="' + jsbin.shareRoot + '">' + jsbin.shareRoot + '</a>'
         });
       },
       error: function (xhr) {
-        $document.trigger('tip', {
+        jsbin.$document.trigger('tip', {
           type: 'error',
           content: 'There was a problem publishing to your vanity URL. Can you try again or file a <a target="_blank" href="' + githubIssue() + '">new issue</a>?'
         });
@@ -519,7 +521,7 @@ define([
     })
   });
 
-  $document.on('click', 'a.deleteallbins', function () {
+  jsbin.$document.on('click', 'a.deleteallbins', function () {
     if (jsbin.user && jsbin.state.metadata.name === jsbin.user.name) {
       if (confirm('Delete all snapshots of this bin including this one?')) {
       analytics.deleteAll();
@@ -528,14 +530,14 @@ define([
         url: jsbin.getURL() + '/delete-all',
         success: function () {
           jsbin.state.deleted = true;
-          $document.trigger('tip', {
+          jsbin.$document.trigger('tip', {
             type: 'error',
             content: 'This bin and history is now deleted. You can continue to edit, but once you leave the bin can\'t be retrieved'
           });
         },
         error: function (xhr) {
           if (xhr.status === 403) {
-            $document.trigger('tip', {
+            jsbin.$document.trigger('tip', {
               content: 'You don\'t own this bin, so you can\'t delete it.',
               autohide: 5000
             });
@@ -545,7 +547,7 @@ define([
 
     }
     } else {
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'error',
         content: 'You must be logged in <em><strong>the bin owner</strong></em> to delete all snapshots. <a target="_blank" href="/help/delete-a-bin">Need help?</a>'
       });
@@ -562,14 +564,14 @@ define([
         data: { checksum: jsbin.state.checksum },
         success: function () {
           jsbin.state.deleted = true;
-          $document.trigger('tip', {
+          jsbin.$document.trigger('tip', {
             type: 'error',
             content: 'This bin is now deleted. You can continue to edit, but once you leave the bin can\'t be retrieved'
           });
         },
         error: function (xhr) {
           if (xhr.status === 403) {
-            $document.trigger('tip', {
+            jsbin.$document.trigger('tip', {
               content: 'You don\'t own this bin, so you can\'t delete it.',
               autohide: 5000
             });
@@ -611,7 +613,7 @@ define([
     } else if (first) {
       first.editor.focus();
     } else {
-      jsbin.panels.panels.html.editor.focus();
+      jsbin.panels.named.html.editor.focus();
     }
     return false;
   });

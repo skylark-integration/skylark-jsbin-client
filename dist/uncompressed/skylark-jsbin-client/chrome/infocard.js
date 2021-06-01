@@ -1,7 +1,8 @@
 define([
   "skylark-jquery",
-   "../jsbin"
-],function ($,jsbin) {
+   "../jsbin",
+   "./analytics"
+],function ($,jsbin,analytics) {
   if ('EventSource' in global) {
     return setupInfocard()
   } else {
@@ -20,7 +21,7 @@ define([
     var $header = $template.find('header');
     var canvas = $header.find('canvas')[0];
     var s = spinner(canvas);
-    var htmlpanel = jsbin.panels.panels.html;
+    var htmlpanel = jsbin.panels.named.html;
     var viewers = 0;
     var es = null;
 
@@ -68,7 +69,7 @@ define([
           es.close();
         }
         es = new EventSource(jsbin.getURL() + '/stats?checksum=' + jsbin.state.checksum);
-        es.addEventListener('stats', throttle(updateStats, 1000));
+        es.addEventListener('stats', jsbin.throttle(updateStats, 1000));
       }
     }
 
@@ -148,7 +149,7 @@ define([
       var cursor = null;
       var cm = htmlpanel.editor;
       var selected = cm.somethingSelected();
-      if (jsbin.panels.panels.html.visible) {
+      if (jsbin.panels.named.html.visible) {
         if (selected) {
           state = cm.listSelections();
         }
@@ -158,7 +159,7 @@ define([
       htmlpanel.setCode(result);
 
       // then restore
-      if (jsbin.panels.panels.html.visible) {
+      if (jsbin.panels.named.html.visible) {
         if (!jsbin.mobile) cm.setCursor(cursor);
         if (selected) {
           cm.setSelections(state);
@@ -221,7 +222,7 @@ define([
           listenStats(owner);
           handleVisibility(owner);
           var url = jsbin.getURL();
-          $document.on('saved', function () {
+          jsbin.$document.on('saved', function () {
             var newurl = window.location.toString();
             if (url !== newurl) {
               es.close();
@@ -230,7 +231,7 @@ define([
           });
         } else if (jsbin.saveDisabled === true && window.location.pathname.slice(-5) === '/edit') {
           $.getScript(jsbin.static + '/js/spike.js?' + jsbin.version);
-          $document.on('stats', throttle(updateStats, 1000));
+          jsbin.$document.on('stats', jsbin.throttle(updateStats, 1000));
         }
       }
     }

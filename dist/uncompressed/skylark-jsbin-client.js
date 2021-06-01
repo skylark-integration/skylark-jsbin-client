@@ -195,239 +195,6 @@ define('skylark-jsbin-client/chrome/font',[
 
   return jsbin.font = font;
 });
-define('skylark-jsbin-client/chrome/splitter',[
-  "skylark-jquery",
-   "../jsbin"
-],function ($,jsbin) {
-  $.fn.splitter = function () {
-    var $document = $(document),
-        $blocker = $('<div class="block"></div>'),
-        $body = $('body');
-        // blockiframe = $blocker.find('iframe')[0];
-
-    var splitterSettings = JSON.parse(store.localStorage.getItem('splitterSettings') || '[]');
-    return this.each(function () {
-      var $el = $(this),
-          $originalContainer = $(this),
-          guid = $.fn.splitter.guid++,
-          $parent = $el.parent(),
-          type = 'x',
-          $prev = type === 'x' ? $el.prevAll(':visible:first') : $el.nextAll(':visible:first'),
-          $handle = $('<div class="resize"></div>'),
-          dragging = false,
-          width = $parent.width(),
-          parentOffset = $parent.offset(),
-          left = parentOffset.left,
-          top = parentOffset.top, // usually zero :(
-          props = {
-            x: {
-              currentPos: $parent.offset().left,
-              multiplier: 1,
-              cssProp: 'left',
-              otherCssProp: 'right',
-              size: $parent.width(),
-              sizeProp: 'width',
-              moveProp: 'pageX',
-              init: {
-                top: 0,
-                bottom: 0,
-                width: jsbin.mobile ? 44 : 8,
-                'margin-left': jsbin.mobile ? '-22px' : '-4px',
-                height: '100%',
-                left: 'auto',
-                right: 'auto',
-                opacity: 0,
-                position: 'absolute',
-                cursor: 'ew-resize',
-                // 'border-top': '0',
-                'border-left': '1px solid rgba(218, 218, 218, 0.5)',
-                'z-index': 99999
-              }
-            },
-            y: {
-              currentPos: $parent.offset().top,
-              multiplier: -1,
-              size: $parent.height(),
-              cssProp: 'bottom',
-              otherCssProp: 'top',
-              sizeProp: 'height',
-              moveProp: 'pageY',
-              init: {
-                top: 'auto',
-                cursor: 'ns-resize',
-                bottom: 'auto',
-                height: 8,
-                width: '100%',
-                left: 0,
-                right: 0,
-                opacity: 0,
-                position: 'absolute',
-                border: 0,
-                // 'border-top': '1px solid rgba(218, 218, 218, 0.5)',
-                'z-index': 99999
-              }
-            }
-          },
-          refreshTimer = null,
-          settings = splitterSettings[guid] || {};
-
-      var tracker = {
-        down: { x: null, y: null },
-        delta: { x: null, y: null },
-        track: false,
-        timer: null
-      };
-      $handle.bind('mousedown', function (event) {
-        tracker.down.x = event.pageX;
-        tracker.down.y = event.pageY;
-        tracker.delta = { x: null, y: null };
-        tracker.target = $handle[type == 'x' ? 'height' : 'width']() * 0.25;
-      });
-
-      $document.bind('mousemove', function (event) {
-        if (dragging) {
-          tracker.delta.x = tracker.down.x - event.pageX;
-          tracker.delta.y = tracker.down.y - event.pageY;
-          clearTimeout(tracker.timer);
-          tracker.timer = setTimeout(function () {
-            tracker.down.x = event.pageX;
-            tracker.down.y = event.pageY;
-          }, 250);
-          var targetType = type == 'x' ? 'y' : 'x';
-          if (Math.abs(tracker.delta[targetType]) > tracker.target) {
-            $handle.trigger('change', targetType, event[props[targetType].moveProp]);
-            tracker.down.x = event.pageX;
-            tracker.down.y = event.pageY;
-          }
-        }
-      });
-
-      function moveSplitter(pos) {
-        if (type === 'y') {
-          pos -= top;
-        }
-        var v = pos - props[type].currentPos,
-            split = 100 / props[type].size * v,
-            delta = (pos - settings[type]) * props[type].multiplier,
-            prevSize = $prev[props[type].sizeProp](),
-            elSize = $el[props[type].sizeProp]();
-
-        if (type === 'y') {
-          split = 100 - split;
-        }
-
-        // if prev panel is too small and delta is negative, block
-        if (prevSize < 100 && delta < 0) {
-          // ignore
-        } else if (elSize < 100 && delta > 0) {
-          // ignore
-        } else {
-          // allow sizing to happen
-          $el.css(props[type].cssProp, split + '%');
-          $prev.css(props[type].otherCssProp, (100 - split) + '%');
-          var css = {};
-          css[props[type].cssProp] = split + '%';
-          $handle.css(css);
-          settings[type] = pos;
-          splitterSettings[guid] = settings;
-          store.localStorage.setItem('splitterSettings', JSON.stringify(splitterSettings));
-
-          // wait until animations have completed!
-          if (moveSplitter.timer) clearTimeout(moveSplitter.timer);
-          moveSplitter.timer = setTimeout(function () {
-            $document.trigger('sizeeditors');
-          }, 120);
-        }
-      }
-
-      function resetPrev() {
-        $prev = type === 'x' ? $handle.prevAll(':visible:first') : $handle.nextAll(':visible:first');
-      }
-
-      $document.bind('mouseup touchend', function () {
-        if (dragging) {
-          dragging = false;
-          $blocker.remove();
-          // $handle.css( 'opacity', '0');
-          $body.removeClass('dragging');
-        }
-      }).bind('mousemove touchmove', function (event) {
-        if (dragging) {
-          moveSplitter(event[props[type].moveProp] || event.originalEvent.touches[0][props[type].moveProp]);
-        }
-      });
-
-      $blocker.bind('mousemove touchmove', function (event) {
-        if (dragging) {
-          moveSplitter(event[props[type].moveProp] || event.originalEvent.touches[0][props[type].moveProp]);
-        }
-      });
-
-      $handle.bind('mousedown touchstart', function (e) {
-        dragging = true;
-        $body.append($blocker).addClass('dragging');
-        props[type].size = $parent[props[type].sizeProp]();
-        props[type].currentPos = 0; // is this really required then?
-
-        resetPrev();
-        e.preventDefault();
-      });
-
-      /*
-      .hover(function () {
-        $handle.css('opacity', '1');
-      }, function () {
-        if (!dragging) {
-          $handle.css('opacity', '0');
-        }
-      })
-    */
-
-      $handle.bind('init', function (event, x) {
-        $handle.css(props[type].init);
-        props[type].size = $parent[props[type].sizeProp]();
-        resetPrev();
-
-        // can only be read at init
-        top = $parent.offset().top;
-
-        $blocker.css('cursor', type == 'x' ? 'ew-resize' : 'ns-resize');
-
-        if (type == 'y') {
-          $el.css('border-right', 0);
-          $prev.css('border-left', 0);
-          $prev.css('border-top', '2px solid #ccc');
-        } else {
-          // $el.css('border-right', '1px solid #ccc');
-          $el.css('border-top', 0);
-          // $prev.css('border-right', '2px solid #ccc');
-        }
-
-        if ($el.is(':hidden')) {
-          $handle.hide();
-        } else {
-          if ($prev.length) {
-            $el.css('border-' + props[type].cssProp, '1px solid #ccc');
-          } else {
-            $el.css('border-' + props[type].cssProp, '0');
-          }
-          moveSplitter(x !== undefined ? x : $el.offset()[props[type].cssProp]);
-        }
-      }); //.trigger('init', settings.x || $el.offset().left);
-
-      $prev.css('width', 'auto');
-      $prev.css('height', 'auto');
-      $el.data('splitter', $handle);
-      $el.before($handle);
-
-      // if (settings.y) {
-      //   $handle.trigger('change', 'y');
-      // }
-    });
-  };
-
-  $.fn.splitter.guid = 0;
-});
 define('skylark-jsbin-client/chrome/analytics',[
   "skylark-jquery",
    "../jsbin"
@@ -623,7 +390,7 @@ define('skylark-jsbin-client/render/saved-history-preview',[
       requestAttempts = 5,
       $history; // set in hookUserHistory()
 
-  $document.on('history:open', function () {
+  jsbin.$document.on('history:open', function () {
     if ($history && jsbin.panels.getVisible().length === 0) {
       $history.appendTo('main');
     }
@@ -802,7 +569,7 @@ define('skylark-jsbin-client/render/saved-history-preview',[
       updateLayout($tbodys, false);
     }, 0);
 
-    $document.trigger('history:open');
+    jsbin.$document.trigger('history:open');
 
     return $history;
   };
@@ -837,7 +604,7 @@ define('skylark-jsbin-client/render/saved-history-preview',[
     $homebtn.on('click', loadList);
     $panelButtons.on('mousedown', panelCloseIntent);
 
-    $document.on('history:load', loadList);
+    jsbin.$document.on('history:load', loadList);
 
     if (!panelsVisible) {
       loadList();
@@ -906,8 +673,9 @@ define('skylark-jsbin-client/chrome/esc',[
 
 define('skylark-jsbin-client/chrome/share',[
   "skylark-jquery",
+  "skylark-jsbin-coder/editors/panels",
    "../jsbin"
-],function ($,jsbin) {
+],function ($,panels,jsbin) {
   'use strict';
   /*globals $, panels, saveChecksum, jsbin, $document, documentTitle*/
 
@@ -924,11 +692,11 @@ define('skylark-jsbin-client/chrome/share',[
 
   var selectedSnapshot = jsbin.state.revision;
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
     selectedSnapshot = jsbin.state.revision;
   });
 
-  $document.on('snapshot', function () {
+  jsbin.$document.on('snapshot', function () {
     jsbin.state.changed = false;
     if (window.history.replaceState) {
       window.history.replaceState(null, '', jsbin.getURL({ withRevision: true }) + '/edit?' + panels.getQuery());
@@ -969,9 +737,9 @@ define('skylark-jsbin-client/chrome/share',[
     update();
   });
   $sharemenu.find('.lockrevision').on('change', function () {
-    saveChecksum = false; // jshint ignore:line
+    jsbin.saveChecksum = false; // jshint ignore:line
     jsbin.state.checksum = false;
-    $document.trigger('locked');
+    jsbin.$document.trigger('locked');
   });
   var $sharepreview = $('#share-preview');
   var $realtime = $('#sharebintype input[type=radio][value="realtime"]');
@@ -1072,7 +840,7 @@ define('skylark-jsbin-client/chrome/share',[
     var code = ''
     var ext = '';
 
-    code = jsbin.panels.panels.html.getCode().trim();
+    code = jsbin.panels.named.html.getCode().trim();
 
     if (code) {
       ext = processors[jsbin.state.processors.html || 'html'].extensions[0];
@@ -1083,7 +851,7 @@ define('skylark-jsbin-client/chrome/share',[
       }
     }
 
-    if (jsbin.panels.panels.css.getCode().trim()) {
+    if (jsbin.panels.named.css.getCode().trim()) {
       ext = processors[jsbin.state.processors.css || 'css'].extensions[0];
       if (ext !== 'css') {
         directLinksHTML.push('<a target="_blank" href="' + url + '.css">css</a>');
@@ -1091,7 +859,7 @@ define('skylark-jsbin-client/chrome/share',[
       directLinksHTML.push('<a target="_blank" href="' + url + '.' + ext + '">' + ext + '</a>');
     }
 
-    code = jsbin.panels.panels.javascript.getCode().trim();
+    code = jsbin.panels.named.javascript.getCode().trim();
 
     if (code) {
       ext = processors[jsbin.state.processors.javascript || 'javascript'].extensions[0];
@@ -1112,7 +880,7 @@ define('skylark-jsbin-client/chrome/share',[
     $directLinks.html(directLinksHTML.join(''));
 
     linkselect.value = link.href = shareurl + query;
-    embed.value = ('<a class="jsbin-embed" href="' + OGurl + '/embed' + query + '">' + documentTitle + ' on jsbin.com</a><' + 'script src="' + jsbin.static + '/js/embed.min.js?' + jsbin.version + '"><' + '/script>').replace(/<>"&/g, function (m) {
+    embed.value = ('<a class="jsbin-embed" href="' + OGurl + '/embed' + query + '">' + jsbin.documentTitle + ' on jsbin.com</a><' + 'script src="' + jsbin.static + '/js/embed.min.js?' + jsbin.version + '"><' + '/script>').replace(/<>"&/g, function (m) {
         return {
           '<': '&lt;',
           '>': '&gt;',
@@ -1129,7 +897,7 @@ define('skylark-jsbin-client/chrome/share',[
   $('#sharebintype input[type=radio]').on('change', function () {
     if (this.value === 'snapshot') {
       jsbin.state.checksum = false;
-      saveChecksum = false; // jshint ignore:line
+      jsbin.saveChecksum = false; // jshint ignore:line
       $withLiveReload.hide();
     } else {
       $withLiveReload.show();
@@ -1138,7 +906,7 @@ define('skylark-jsbin-client/chrome/share',[
 
   $sharemenu.find('input').on('change', update);
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
 
     // revert to the latest bin state
     $realtime.prop('checked', true);
@@ -1349,7 +1117,7 @@ define('skylark-jsbin-client/chrome/keys',[
     keys = JSON.parse(localStorage.keys || '{}');
   }
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
     keys[jsbin.getURL({ withRevision: false, withoutRoot: true })] = { s: jsbin.state.revsion, c: jsbin.state.checksum, d: (new Date()).getTime() };
     localStorage.keys = JSON.stringify(keys);
   });
@@ -1367,8 +1135,12 @@ define('skylark-jsbin-client/chrome/keys',[
 
 });
 define('skylark-jsbin-client/chrome/save',[
-   "../jsbin"
-],function (jsbin) {
+  "skylark-jquery",
+  "skylark-jsbin-base/storage",
+  "skylark-jsbin-coder/editors/panels",
+   "../jsbin",
+   "./analytics"
+],function ($,store,panels,jsbin,analytics) {
   /*jshint strict: false */
   /*globals $, analytics, jsbin, documentTitle, $document, throttle, editors*/
   var saving = {
@@ -1404,7 +1176,7 @@ define('skylark-jsbin-client/chrome/save',[
   };
 
   function getTagContent(tag) {
-    var html = jsbin.panels.panels.html.getCode();
+    var html = jsbin.panels.named.html.getCode();
     var result = '';
 
     // if we don't have the tag, bail with an empty string
@@ -1493,7 +1265,7 @@ define('skylark-jsbin-client/chrome/save',[
           this.value += hash;
         }
       } else if (nodeName === 'TEXTAREA') {
-        this.value = ('<a class="jsbin-embed" href="' + url + hash + '">' + documentTitle + '</a><' + 'script src="' + jsbin.static + '/js/embed.js"><' + '/script>').replace(/<>"&/g, function (m) {
+        this.value = ('<a class="jsbin-embed" href="' + url + hash + '">' + jsbin.documentTitle + '</a><' + 'script src="' + jsbin.static + '/js/embed.js"><' + '/script>').replace(/<>"&/g, function (m) {
             return {
               '<': '&lt;',
               '>': '&gt;',
@@ -1523,7 +1295,7 @@ define('skylark-jsbin-client/chrome/save',[
       }
     }
 
-    var currentHTML = jsbin.panels.panels.html.getCode();
+    var currentHTML = jsbin.panels.named.html.getCode();
     if (lastHTML !== currentHTML) {
       lastHTML = currentHTML;
 
@@ -1538,9 +1310,9 @@ define('skylark-jsbin-client/chrome/save',[
         jsbin.state.title = title;
         jsbin.state.updateSettings({ title: title });
 
-        documentTitle = title;
-        if (documentTitle) {
-          document.title = documentTitle + ' - ' + jsbin.name;
+        jsbin.documentTitle = title;
+        if (jsbin.documentTitle) {
+          document.title = jsbin.documentTitle + ' - ' + jsbin.name;
         } else {
           document.title = jsbin.name;
         }
@@ -1548,9 +1320,9 @@ define('skylark-jsbin-client/chrome/save',[
     }
   }
 
-  $document.on('saveComplete', updateDocMeta); // update, not create
+  jsbin.$document.on('saveComplete', updateDocMeta); // update, not create
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
     jsbin.state.changed = false;
     updateSavedState();
 
@@ -1579,7 +1351,7 @@ define('skylark-jsbin-client/chrome/save',[
     });
   }
 
-  $document.one('saved', function () {
+  jsbin.$document.one('saved', function () {
     $('#share div.disabled').removeClass('disabled').unbind('click mousedown mouseup');
   });
 
@@ -1589,7 +1361,7 @@ define('skylark-jsbin-client/chrome/save',[
       $('#tip p').html('Sorry this bin is too large for us to save');
       $(document.documentElement).addClass('showtip');
     } else if (jqXHR.status === 403) {
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'error',
         content: 'I think there\'s something wrong with your session and I\'m unable to save. <a href="' + window.location + '"><strong>Refresh to fix this</strong></a>, you <strong>will not</strong> lose your code.'
       });
@@ -1611,18 +1383,18 @@ define('skylark-jsbin-client/chrome/save',[
       css: $('.panel.css .name span.saved'),
     };
 
-    $document.bind('jsbinReady', function () {
+    jsbin.$document.bind('jsbinReady', function () {
       jsbin.state.changed = false;
       jsbin.panels.allEditors(function (panel) {
         panel.on('processor', function () {
           // if the url doesn't match the root - i.e. they've actually saved something then save on processor change
           if (jsbin.root !== jsbin.getURL()) {
-            $document.trigger('codeChange', [{ panelId: panel.id }]);
+            jsbin.$document.trigger('codeChange', [{ panelId: panel.id }]);
           }
         });
       });
 
-      $document.bind('codeChange', function (event, data) {
+      jsbin.$document.bind('codeChange', function (event, data) {
         jsbin.state.changed = true;
         // savingLabels[data.panelId].text('Saving');
         if (savingLabels[data.panelId]) {
@@ -1630,7 +1402,7 @@ define('skylark-jsbin-client/chrome/save',[
         }
       });
 
-      $document.bind('saveComplete', throttle(function (event, data) {
+      jsbin.$document.bind('saveComplete', jsbin.throttle(function (event, data) {
         // show saved, then revert out animation
         savingLabels[data.panelId]
           .text('Saved')
@@ -1640,7 +1412,7 @@ define('skylark-jsbin-client/chrome/save',[
           .animate({ opacity: 0 }, 500);
       }, 500));
 
-      $document.bind('codeChange', throttle(function (event, data) {
+      jsbin.$document.bind('codeChange', jsbin.throttle(function (event, data) {
         if (!data.panelId) {
           return;
         }
@@ -1671,11 +1443,11 @@ define('skylark-jsbin-client/chrome/save',[
       }, 30 * 1000));
     });
   } else {
-    $document.one('jsbinReady', function () {
+    jsbin.$document.one('jsbinReady', function () {
       'use strict';
       var shown = false;
       if (!jsbin.embed && !jsbin.sandbox) {
-        $document.on('codeChange.live', function (event, data) {
+        jsbin.$document.on('codeChange.live', function (event, data) {
           if (!data.onload && !shown && data.origin !== 'setValue') {
             shown = true;
             var ismac = navigator.userAgent.indexOf(' Mac ') !== -1;
@@ -1683,7 +1455,7 @@ define('skylark-jsbin-client/chrome/save',[
             var shift = ismac ? '⇧' : 'shift';
             var plus = ismac ? '' : '+';
 
-            $document.trigger('tip', {
+            jsbin.$document.trigger('tip', {
               type: 'notification',
               content: 'You\'re currently viewing someone else\'s live stream, but you can <strong><a class="clone" href="' + jsbin.root + '/clone">clone your own copy</a></strong> (' + cmd + plus + shift + plus + 'S) at any time to save your edits'
             });
@@ -1712,8 +1484,8 @@ define('skylark-jsbin-client/chrome/save',[
       revision: jsbin.state.revision,
       method: 'update',
       panel: panelId,
-      content: editors[panelId].getCode(),
-      checksum: saveChecksum,
+      content: panels.named[panelId].getCode(),
+      checksum: jsbin.saveChecksum,
       settings: JSON.stringify(panelSettings),
     };
 
@@ -1734,7 +1506,7 @@ define('skylark-jsbin-client/chrome/save',[
       dataType: 'json',
       headers: {'Accept': 'application/json'},
       success: function (data) {
-        $document.trigger('saveComplete', { panelId: panelId });
+        jsbin.$document.trigger('saveComplete', { panelId: panelId });
         if (data.error) {
           saveCode('save', true, function () {
             // savedAlready = data.checksum;
@@ -1866,7 +1638,7 @@ define('skylark-jsbin-client/chrome/save',[
             window.location.hash = data.edit;
           }
 
-          $document.trigger('saved');
+          jsbin.$document.trigger('saved');
         },
         error: function (jqXHR) {
           onSaveError(jqXHR, null);
@@ -1881,10 +1653,70 @@ define('skylark-jsbin-client/chrome/save',[
   }
 
 });
+define('skylark-jsbin-client/chrome/archive',[
+  "skylark-jquery",
+   "../jsbin",
+   "./analytics"
+],function ($,jsbin,analytics) {
+  function archive(unarchive) {
+    /*global jsbin, $, $document, analytics*/
+    'use strict';
+    var type = unarchive === false ? 'unarchive' : 'archive';
+    var text = unarchive === false ? 'restore from archive' : 'archiving';
+    analytics[type](jsbin.getURL({ withRevision: true }));
+    if (!jsbin.user.name) {
+      jsbin.$document.trigger('tip', {
+        type: 'notication',
+        content: 'You must be logged in and the owner of the bin to archive.'
+      });
+    } else if (jsbin.owner()) {
+      $.ajax({
+        type: 'POST',
+        url: jsbin.getURL({ withRevision: true }) + '/' + type,
+        error: function () {
+          jsbin.$document.trigger('tip', {
+            type: 'error',
+            content: 'The ' + text + ' failed. If this continues, please can you file an issue?'
+          });
+        },
+        success: function () {
+          jsbin.state.metadata.archive = unarchive !== false;
+          updateArchiveMenu();
+          jsbin.$document.trigger('tip', {
+            type: 'notication',
+            autohide: 5000,
+            content: 'This bin is now ' + (unarchive === false ? 'restored from the archive.' : 'archived.')
+          });
+        }
+      });
+    } else {
+      jsbin.$document.trigger('tip', {
+        type: 'notication',
+        content: 'The ' + text + ' failed. You can only archive bins that you own.'
+      });
+    }
+  }
+
+  function updateArchiveMenu() {
+    if (jsbin.state.metadata && jsbin.state.metadata.archive) {
+      $('a.archivebin').hide();
+      $('a.unarchivebin').show();
+    } else {
+      $('a.archivebin').show();
+      $('a.unarchivebin').hide();
+    }
+  }
+
+  updateArchiveMenu();
+
+  return jsbin.archive = archive;
+});
 define('skylark-jsbin-client/chrome/navigation',[
   "skylark-jquery",
-   "../jsbin"
-],function ($,jsbin) {
+   "../jsbin",
+   "./analytics",
+   "./archive"
+],function ($,jsbin,analytics, archive) {
   var $startingpoint = $('a.startingpoint').click(function (event) {
     event.preventDefault();
     if (localStorage) {
@@ -1894,18 +1726,18 @@ define('skylark-jsbin-client/chrome/navigation',[
       localStorage.setItem('saved-css', editors.css.getCode());
 
       localStorage.setItem('saved-processors', JSON.stringify({
-        javascript: jsbin.panels.panels.javascript.processor.id,
-        html: jsbin.panels.panels.html.processor.id,
-        css: jsbin.panels.panels.css.processor.id,
+        javascript: jsbin.panels.named.javascript.processor.id,
+        html: jsbin.panels.named.html.processor.id,
+        css: jsbin.panels.named.css.processor.id,
       }));
 
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'notification',
         content: 'Starting template updated and saved',
         autohide: 3000
       });
     } else {
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'error',
         content: 'Saving templates isn\'t supported in this browser I\'m afraid. Sorry'
       });
@@ -1964,13 +1796,13 @@ define('skylark-jsbin-client/chrome/navigation',[
 
   var $lockrevision = $('div.lockrevision').on('click', function (event) {
     event.preventDefault();
-    saveChecksum = false;
-    $document.trigger('locked');
+    jsbin.saveChecksum = false;
+    jsbin.$document.trigger('locked');
   }).on('mouseup', function () {
     return false;
   });
 
-  $document.on('locked', function () {
+  jsbin.$document.on('locked', function () {
     if (!$lockrevision.data('locked')) {
       analytics.lock();
       $lockrevision.removeClass('icon-unlocked').addClass('icon-lock');
@@ -1982,7 +1814,7 @@ define('skylark-jsbin-client/chrome/navigation',[
   // var $lockrevision = $('.lockrevision').on('click', function (event) {
   // });
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
     $lockrevision.removeClass('icon-lock').addClass('icon-unlocked').data('locked', false);
     $lockrevision.html('<span>Click to lock and prevent further changes</span>');
   });
@@ -2131,7 +1963,7 @@ define('skylark-jsbin-client/chrome/navigation',[
 
   $('#jsbinurl').click(function (e) {
     setTimeout(function () {
-      jsbin.panels.panels.live.hide();
+      jsbin.panels.named.live.hide();
     }, 0);
   });
 
@@ -2217,8 +2049,8 @@ define('skylark-jsbin-client/chrome/navigation',[
     // if nothing was shown, show html & live
     setTimeout(function () {
       if (jsbin.panels.getVisible().length === 0) {
-        jsbin.panels.panels.html.show();
-        jsbin.panels.panels.live.show();
+        jsbin.panels.named.html.show();
+        jsbin.panels.named.live.show();
       }
       window.location = jsbin.root;
     }, 0);
@@ -2237,7 +2069,7 @@ define('skylark-jsbin-client/chrome/navigation',[
       type: 'post',
       success: function (data) {
 
-        $document.trigger('tip', {
+        jsbin.$document.trigger('tip', {
           type: 'notification',
           content: 'This bin is now ' + visibility,
           autohide: 6000
@@ -2269,7 +2101,7 @@ define('skylark-jsbin-client/chrome/navigation',[
 
   // ignore for embed as there might be a lot of embeds on the page
   if (!jsbin.embed && store.sessionStorage.getItem('runnerPending')) {
-    $document.trigger('tip', {
+    jsbin.$document.trigger('tip', {
       content: 'It looks like your last session may have crashed, so I\'ve disabled "Auto-run JS" for you',
       type: 'error',
     });
@@ -2335,7 +2167,7 @@ define('skylark-jsbin-client/chrome/navigation',[
     // if not - insert
     // <meta name="description" content="" />
     // if meta description is in the HTML, highlight it
-    var editor = jsbin.panels.panels.html,
+    var editor = jsbin.panels.named.html,
         cm = editor.editor,
         html = editor.getCode();
 
@@ -2388,13 +2220,13 @@ define('skylark-jsbin-client/chrome/navigation',[
       url: this.href,
       data: { url: jsbin.getURL({ withRevision: true }) },
       success: function () {
-        $document.trigger('tip', {
+        jsbin.$document.trigger('tip', {
           type: 'notification',
           content: 'This bin is now published to your vanity URL: <a target="_blank" href="' + jsbin.shareRoot + '">' + jsbin.shareRoot + '</a>'
         });
       },
       error: function (xhr) {
-        $document.trigger('tip', {
+        jsbin.$document.trigger('tip', {
           type: 'error',
           content: 'There was a problem publishing to your vanity URL. Can you try again or file a <a target="_blank" href="' + githubIssue() + '">new issue</a>?'
         });
@@ -2402,7 +2234,7 @@ define('skylark-jsbin-client/chrome/navigation',[
     })
   });
 
-  $document.on('click', 'a.deleteallbins', function () {
+  jsbin.$document.on('click', 'a.deleteallbins', function () {
     if (jsbin.user && jsbin.state.metadata.name === jsbin.user.name) {
       if (confirm('Delete all snapshots of this bin including this one?')) {
       analytics.deleteAll();
@@ -2411,14 +2243,14 @@ define('skylark-jsbin-client/chrome/navigation',[
         url: jsbin.getURL() + '/delete-all',
         success: function () {
           jsbin.state.deleted = true;
-          $document.trigger('tip', {
+          jsbin.$document.trigger('tip', {
             type: 'error',
             content: 'This bin and history is now deleted. You can continue to edit, but once you leave the bin can\'t be retrieved'
           });
         },
         error: function (xhr) {
           if (xhr.status === 403) {
-            $document.trigger('tip', {
+            jsbin.$document.trigger('tip', {
               content: 'You don\'t own this bin, so you can\'t delete it.',
               autohide: 5000
             });
@@ -2428,7 +2260,7 @@ define('skylark-jsbin-client/chrome/navigation',[
 
     }
     } else {
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'error',
         content: 'You must be logged in <em><strong>the bin owner</strong></em> to delete all snapshots. <a target="_blank" href="/help/delete-a-bin">Need help?</a>'
       });
@@ -2445,14 +2277,14 @@ define('skylark-jsbin-client/chrome/navigation',[
         data: { checksum: jsbin.state.checksum },
         success: function () {
           jsbin.state.deleted = true;
-          $document.trigger('tip', {
+          jsbin.$document.trigger('tip', {
             type: 'error',
             content: 'This bin is now deleted. You can continue to edit, but once you leave the bin can\'t be retrieved'
           });
         },
         error: function (xhr) {
           if (xhr.status === 403) {
-            $document.trigger('tip', {
+            jsbin.$document.trigger('tip', {
               content: 'You don\'t own this bin, so you can\'t delete it.',
               autohide: 5000
             });
@@ -2494,7 +2326,7 @@ define('skylark-jsbin-client/chrome/navigation',[
     } else if (first) {
       first.editor.focus();
     } else {
-      jsbin.panels.panels.html.editor.focus();
+      jsbin.panels.named.html.editor.focus();
     }
     return false;
   });
@@ -3024,8 +2856,9 @@ define('skylark-jsbin-client/chrome/spinner',[
 });
 define('skylark-jsbin-client/chrome/infocard',[
   "skylark-jquery",
-   "../jsbin"
-],function ($,jsbin) {
+   "../jsbin",
+   "./analytics"
+],function ($,jsbin,analytics) {
   if ('EventSource' in global) {
     return setupInfocard()
   } else {
@@ -3044,7 +2877,7 @@ define('skylark-jsbin-client/chrome/infocard',[
     var $header = $template.find('header');
     var canvas = $header.find('canvas')[0];
     var s = spinner(canvas);
-    var htmlpanel = jsbin.panels.panels.html;
+    var htmlpanel = jsbin.panels.named.html;
     var viewers = 0;
     var es = null;
 
@@ -3092,7 +2925,7 @@ define('skylark-jsbin-client/chrome/infocard',[
           es.close();
         }
         es = new EventSource(jsbin.getURL() + '/stats?checksum=' + jsbin.state.checksum);
-        es.addEventListener('stats', throttle(updateStats, 1000));
+        es.addEventListener('stats', jsbin.throttle(updateStats, 1000));
       }
     }
 
@@ -3172,7 +3005,7 @@ define('skylark-jsbin-client/chrome/infocard',[
       var cursor = null;
       var cm = htmlpanel.editor;
       var selected = cm.somethingSelected();
-      if (jsbin.panels.panels.html.visible) {
+      if (jsbin.panels.named.html.visible) {
         if (selected) {
           state = cm.listSelections();
         }
@@ -3182,7 +3015,7 @@ define('skylark-jsbin-client/chrome/infocard',[
       htmlpanel.setCode(result);
 
       // then restore
-      if (jsbin.panels.panels.html.visible) {
+      if (jsbin.panels.named.html.visible) {
         if (!jsbin.mobile) cm.setCursor(cursor);
         if (selected) {
           cm.setSelections(state);
@@ -3245,7 +3078,7 @@ define('skylark-jsbin-client/chrome/infocard',[
           listenStats(owner);
           handleVisibility(owner);
           var url = jsbin.getURL();
-          $document.on('saved', function () {
+          jsbin.$document.on('saved', function () {
             var newurl = window.location.toString();
             if (url !== newurl) {
               es.close();
@@ -3254,7 +3087,7 @@ define('skylark-jsbin-client/chrome/infocard',[
           });
         } else if (jsbin.saveDisabled === true && window.location.pathname.slice(-5) === '/edit') {
           $.getScript(jsbin.static + '/js/spike.js?' + jsbin.version);
-          $document.on('stats', throttle(updateStats, 1000));
+          jsbin.$document.on('stats', jsbin.throttle(updateStats, 1000));
         }
       }
     }
@@ -3390,69 +3223,11 @@ define('skylark-jsbin-client/chrome/last-bin',[
 
   // save the bin url when the bin is saved, changed and when we load first time
   if (jsbin && jsbin.getURL) {
-    $document.on('saved', save);
+    jsbin.$document.on('saved', save);
     save();
   } else {
     updateBackButton();
   }
-});
-define('skylark-jsbin-client/chrome/archive',[
-  "skylark-jquery",
-   "../jsbin",
-   "./analytics"
-],function ($,jsbin,analytics) {
-  function archive(unarchive) {
-    /*global jsbin, $, $document, analytics*/
-    'use strict';
-    var type = unarchive === false ? 'unarchive' : 'archive';
-    var text = unarchive === false ? 'restore from archive' : 'archiving';
-    analytics[type](jsbin.getURL({ withRevision: true }));
-    if (!jsbin.user.name) {
-      jsbin.$document.trigger('tip', {
-        type: 'notication',
-        content: 'You must be logged in and the owner of the bin to archive.'
-      });
-    } else if (jsbin.owner()) {
-      $.ajax({
-        type: 'POST',
-        url: jsbin.getURL({ withRevision: true }) + '/' + type,
-        error: function () {
-          $document.trigger('tip', {
-            type: 'error',
-            content: 'The ' + text + ' failed. If this continues, please can you file an issue?'
-          });
-        },
-        success: function () {
-          jsbin.state.metadata.archive = unarchive !== false;
-          updateArchiveMenu();
-          $document.trigger('tip', {
-            type: 'notication',
-            autohide: 5000,
-            content: 'This bin is now ' + (unarchive === false ? 'restored from the archive.' : 'archived.')
-          });
-        }
-      });
-    } else {
-      jsbin.$document.trigger('tip', {
-        type: 'notication',
-        content: 'The ' + text + ' failed. You can only archive bins that you own.'
-      });
-    }
-  }
-
-  function updateArchiveMenu() {
-    if (jsbin.state.metadata && jsbin.state.metadata.archive) {
-      $('a.archivebin').hide();
-      $('a.unarchivebin').show();
-    } else {
-      $('a.archivebin').show();
-      $('a.unarchivebin').hide();
-    }
-  }
-
-  updateArchiveMenu();
-
-  return jsbin.archive = archive;
 });
 define('skylark-jsbin-client/chrome/transfer',[
   "skylark-jquery",
@@ -3503,9 +3278,10 @@ define('skylark-jsbin-client/chrome/transfer',[
 });
 define('skylark-jsbin-client/chrome/welcome-panel',[
   "skylark-jquery",
+  "skylark-jsbin-base/storage",
    "../jsbin",
    "./analytics"
-],function ($,jsbin,analytics) {
+],function ($,store,jsbin,analytics) {
     /*global jsbin, $, $body, $document, analytics, settings*/
     'use strict';
 
@@ -3522,8 +3298,8 @@ define('skylark-jsbin-client/chrome/welcome-panel',[
     }
 
     if ($body.hasClass('toppanel') && jsbin.settings.gui.toppanel === false) {
-      $body.addClass('toppanel-close');
-      $body.removeClass('toppanel');
+      jsbin.$body.addClass('toppanel-close');
+      jsbin.$body.removeClass('toppanel');
     }
 
     // analytics for panel state
@@ -3532,8 +3308,8 @@ define('skylark-jsbin-client/chrome/welcome-panel',[
     var removeToppanel = function() {
       jsbin.settings.gui.toppanel = false;
       settings.save();
-      $body.addClass('toppanel-close');
-      $body.removeClass('toppanel');
+      jsbin.$body.addClass('toppanel-close');
+      jsbin.$body.removeClass('toppanel');
 
       // $document.trigger('sizeeditors');
     };
@@ -3541,19 +3317,19 @@ define('skylark-jsbin-client/chrome/welcome-panel',[
     var showToppanel = function() {
       jsbin.settings.gui.toppanel = true;
       settings.save();
-      $body.removeClass('toppanel-close');
-      $body.addClass('toppanel');
+      jsbin.$body.removeClass('toppanel-close');
+      jsbin.$body.addClass('toppanel');
     };
 
     var goSlow = function(e) {
-      $body.removeClass('toppanel-slow');
+      jsbin.$body.removeClass('toppanel-slow');
       if (e.shiftKey) {
-        $body.addClass('toppanel-slow');
+        jsbin.$body.addClass('toppanel-slow');
       }
     };
 
     $('.toppanel-logo').on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', function(e) {
-      $document.trigger('sizeeditors');
+      jsbin.$document.trigger('sizeeditors');
     });
 
     $('.toppanel-hide').click(function(event) {
@@ -3631,7 +3407,7 @@ define('skylark-jsbin-client/chrome/welcome-panel',[
             // the timestamp when the user clicks the link, because we know
             // they'll land on the latest post
             try {
-              localStorage.lastpost = data.blog[count-1].timestamp;
+              store.localStorage.lastpost = data.blog[count-1].timestamp;
             } catch (e) {}
           });
         }
@@ -3794,10 +3570,11 @@ define('skylark-jsbin-client/chrome/help-search',[
 
 define('skylark-jsbin-client/chrome/app',[
   "skylark-jquery",
+  "skylark-jsbin-coder/editors/codemirror",
    "../jsbin",
    "./gist",
    "./analytics"
-],function ($,jsbin,Gist,analytics) {
+],function ($,CodeMirror,jsbin,Gist,analytics) {
   // if a gist has been requested, lazy load the gist library and plug it in
   if (/gist\/.*/.test(window.location.pathname)) {
     window.editors = editors; // needs to be global when the callback triggers to set the content
@@ -3808,7 +3585,7 @@ define('skylark-jsbin-client/chrome/app',[
     if (editors.ready) {
       loadGist();
     } else {
-      $document.on('jsbinReady', loadGist);
+      jsbin.$document.on('jsbinReady', loadGist);
     }
   }
 
@@ -3850,7 +3627,6 @@ define('skylark-jsbin-client/main',[
 	"skylark-jsbin-coder",
 	"./jsbin",
     "./chrome/font",
-    "./chrome/splitter",
     "./chrome/analytics",
     "./chrome/settings",
     "./render/saved-history-preview",

@@ -35,7 +35,7 @@ define([
     }
     // trigger a resize after the click has completed and the details is close
     setTimeout(function () {
-      $document.trigger('sizeeditors');
+      jsbin.$document.trigger('sizeeditors');
     }, 10);
   });
 
@@ -92,7 +92,7 @@ define([
 
     if (hint === true && visible) {
       $error.hide();
-      $document.trigger('sizeeditors');
+      jsbin.$document.trigger('sizeeditors');
     } else if (jshintErrors.errors.length) {
       var html = ['<ol>'];
       errors = jshintErrors.errors;
@@ -112,7 +112,7 @@ define([
       if (!detailsSupport && $error[0].open === false) html = $(html).hide();
 
       $error.append(html).show();
-      $document.trigger('sizeeditors');
+      jsbin.$document.trigger('sizeeditors');
     }
   };
 

@@ -1,7 +1,8 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-coder/editors/panels",
    "../jsbin"
-],function ($,jsbin) {
+],function ($,panels,jsbin) {
   'use strict';
   /*globals $, panels, saveChecksum, jsbin, $document, documentTitle*/
 
@@ -18,11 +19,11 @@ define([
 
   var selectedSnapshot = jsbin.state.revision;
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
     selectedSnapshot = jsbin.state.revision;
   });
 
-  $document.on('snapshot', function () {
+  jsbin.$document.on('snapshot', function () {
     jsbin.state.changed = false;
     if (window.history.replaceState) {
       window.history.replaceState(null, '', jsbin.getURL({ withRevision: true }) + '/edit?' + panels.getQuery());
@@ -63,9 +64,9 @@ define([
     update();
   });
   $sharemenu.find('.lockrevision').on('change', function () {
-    saveChecksum = false; // jshint ignore:line
+    jsbin.saveChecksum = false; // jshint ignore:line
     jsbin.state.checksum = false;
-    $document.trigger('locked');
+    jsbin.$document.trigger('locked');
   });
   var $sharepreview = $('#share-preview');
   var $realtime = $('#sharebintype input[type=radio][value="realtime"]');
@@ -166,7 +167,7 @@ define([
     var code = ''
     var ext = '';
 
-    code = jsbin.panels.panels.html.getCode().trim();
+    code = jsbin.panels.named.html.getCode().trim();
 
     if (code) {
       ext = processors[jsbin.state.processors.html || 'html'].extensions[0];
@@ -177,7 +178,7 @@ define([
       }
     }
 
-    if (jsbin.panels.panels.css.getCode().trim()) {
+    if (jsbin.panels.named.css.getCode().trim()) {
       ext = processors[jsbin.state.processors.css || 'css'].extensions[0];
       if (ext !== 'css') {
         directLinksHTML.push('<a target="_blank" href="' + url + '.css">css</a>');
@@ -185,7 +186,7 @@ define([
       directLinksHTML.push('<a target="_blank" href="' + url + '.' + ext + '">' + ext + '</a>');
     }
 
-    code = jsbin.panels.panels.javascript.getCode().trim();
+    code = jsbin.panels.named.javascript.getCode().trim();
 
     if (code) {
       ext = processors[jsbin.state.processors.javascript || 'javascript'].extensions[0];
@@ -206,7 +207,7 @@ define([
     $directLinks.html(directLinksHTML.join(''));
 
     linkselect.value = link.href = shareurl + query;
-    embed.value = ('<a class="jsbin-embed" href="' + OGurl + '/embed' + query + '">' + documentTitle + ' on jsbin.com</a><' + 'script src="' + jsbin.static + '/js/embed.min.js?' + jsbin.version + '"><' + '/script>').replace(/<>"&/g, function (m) {
+    embed.value = ('<a class="jsbin-embed" href="' + OGurl + '/embed' + query + '">' + jsbin.documentTitle + ' on jsbin.com</a><' + 'script src="' + jsbin.static + '/js/embed.min.js?' + jsbin.version + '"><' + '/script>').replace(/<>"&/g, function (m) {
         return {
           '<': '&lt;',
           '>': '&gt;',
@@ -223,7 +224,7 @@ define([
   $('#sharebintype input[type=radio]').on('change', function () {
     if (this.value === 'snapshot') {
       jsbin.state.checksum = false;
-      saveChecksum = false; // jshint ignore:line
+      jsbin.saveChecksum = false; // jshint ignore:line
       $withLiveReload.hide();
     } else {
       $withLiveReload.show();
@@ -232,7 +233,7 @@ define([
 
   $sharemenu.find('input').on('change', update);
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
 
     // revert to the latest bin state
     $realtime.prop('checked', true);

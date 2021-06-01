@@ -1,6 +1,10 @@
 define([
-   "../jsbin"
-],function (jsbin) {
+  "skylark-jquery",
+  "skylark-jsbin-base/storage",
+  "skylark-jsbin-coder/editors/panels",
+   "../jsbin",
+   "./analytics"
+],function ($,store,panels,jsbin,analytics) {
   /*jshint strict: false */
   /*globals $, analytics, jsbin, documentTitle, $document, throttle, editors*/
   var saving = {
@@ -36,7 +40,7 @@ define([
   };
 
   function getTagContent(tag) {
-    var html = jsbin.panels.panels.html.getCode();
+    var html = jsbin.panels.named.html.getCode();
     var result = '';
 
     // if we don't have the tag, bail with an empty string
@@ -125,7 +129,7 @@ define([
           this.value += hash;
         }
       } else if (nodeName === 'TEXTAREA') {
-        this.value = ('<a class="jsbin-embed" href="' + url + hash + '">' + documentTitle + '</a><' + 'script src="' + jsbin.static + '/js/embed.js"><' + '/script>').replace(/<>"&/g, function (m) {
+        this.value = ('<a class="jsbin-embed" href="' + url + hash + '">' + jsbin.documentTitle + '</a><' + 'script src="' + jsbin.static + '/js/embed.js"><' + '/script>').replace(/<>"&/g, function (m) {
             return {
               '<': '&lt;',
               '>': '&gt;',
@@ -155,7 +159,7 @@ define([
       }
     }
 
-    var currentHTML = jsbin.panels.panels.html.getCode();
+    var currentHTML = jsbin.panels.named.html.getCode();
     if (lastHTML !== currentHTML) {
       lastHTML = currentHTML;
 
@@ -170,9 +174,9 @@ define([
         jsbin.state.title = title;
         jsbin.state.updateSettings({ title: title });
 
-        documentTitle = title;
-        if (documentTitle) {
-          document.title = documentTitle + ' - ' + jsbin.name;
+        jsbin.documentTitle = title;
+        if (jsbin.documentTitle) {
+          document.title = jsbin.documentTitle + ' - ' + jsbin.name;
         } else {
           document.title = jsbin.name;
         }
@@ -180,9 +184,9 @@ define([
     }
   }
 
-  $document.on('saveComplete', updateDocMeta); // update, not create
+  jsbin.$document.on('saveComplete', updateDocMeta); // update, not create
 
-  $document.on('saved', function () {
+  jsbin.$document.on('saved', function () {
     jsbin.state.changed = false;
     updateSavedState();
 
@@ -211,7 +215,7 @@ define([
     });
   }
 
-  $document.one('saved', function () {
+  jsbin.$document.one('saved', function () {
     $('#share div.disabled').removeClass('disabled').unbind('click mousedown mouseup');
   });
 
@@ -221,7 +225,7 @@ define([
       $('#tip p').html('Sorry this bin is too large for us to save');
       $(document.documentElement).addClass('showtip');
     } else if (jqXHR.status === 403) {
-      $document.trigger('tip', {
+      jsbin.$document.trigger('tip', {
         type: 'error',
         content: 'I think there\'s something wrong with your session and I\'m unable to save. <a href="' + window.location + '"><strong>Refresh to fix this</strong></a>, you <strong>will not</strong> lose your code.'
       });
@@ -243,18 +247,18 @@ define([
       css: $('.panel.css .name span.saved'),
     };
 
-    $document.bind('jsbinReady', function () {
+    jsbin.$document.bind('jsbinReady', function () {
       jsbin.state.changed = false;
       jsbin.panels.allEditors(function (panel) {
         panel.on('processor', function () {
           // if the url doesn't match the root - i.e. they've actually saved something then save on processor change
           if (jsbin.root !== jsbin.getURL()) {
-            $document.trigger('codeChange', [{ panelId: panel.id }]);
+            jsbin.$document.trigger('codeChange', [{ panelId: panel.id }]);
           }
         });
       });
 
-      $document.bind('codeChange', function (event, data) {
+      jsbin.$document.bind('codeChange', function (event, data) {
         jsbin.state.changed = true;
         // savingLabels[data.panelId].text('Saving');
         if (savingLabels[data.panelId]) {
@@ -262,7 +266,7 @@ define([
         }
       });
 
-      $document.bind('saveComplete', throttle(function (event, data) {
+      jsbin.$document.bind('saveComplete', jsbin.throttle(function (event, data) {
         // show saved, then revert out animation
         savingLabels[data.panelId]
           .text('Saved')
@@ -272,7 +276,7 @@ define([
           .animate({ opacity: 0 }, 500);
       }, 500));
 
-      $document.bind('codeChange', throttle(function (event, data) {
+      jsbin.$document.bind('codeChange', jsbin.throttle(function (event, data) {
         if (!data.panelId) {
           return;
         }
@@ -303,11 +307,11 @@ define([
       }, 30 * 1000));
     });
   } else {
-    $document.one('jsbinReady', function () {
+    jsbin.$document.one('jsbinReady', function () {
       'use strict';
       var shown = false;
       if (!jsbin.embed && !jsbin.sandbox) {
-        $document.on('codeChange.live', function (event, data) {
+        jsbin.$document.on('codeChange.live', function (event, data) {
           if (!data.onload && !shown && data.origin !== 'setValue') {
             shown = true;
             var ismac = navigator.userAgent.indexOf(' Mac ') !== -1;
@@ -315,7 +319,7 @@ define([
             var shift = ismac ? '⇧' : 'shift';
             var plus = ismac ? '' : '+';
 
-            $document.trigger('tip', {
+            jsbin.$document.trigger('tip', {
               type: 'notification',
               content: 'You\'re currently viewing someone else\'s live stream, but you can <strong><a class="clone" href="' + jsbin.root + '/clone">clone your own copy</a></strong> (' + cmd + plus + shift + plus + 'S) at any time to save your edits'
             });
@@ -344,8 +348,8 @@ define([
       revision: jsbin.state.revision,
       method: 'update',
       panel: panelId,
-      content: editors[panelId].getCode(),
-      checksum: saveChecksum,
+      content: panels.named[panelId].getCode(),
+      checksum: jsbin.saveChecksum,
       settings: JSON.stringify(panelSettings),
     };
 
@@ -366,7 +370,7 @@ define([
       dataType: 'json',
       headers: {'Accept': 'application/json'},
       success: function (data) {
-        $document.trigger('saveComplete', { panelId: panelId });
+        jsbin.$document.trigger('saveComplete', { panelId: panelId });
         if (data.error) {
           saveCode('save', true, function () {
             // savedAlready = data.checksum;
@@ -498,7 +502,7 @@ define([
             window.location.hash = data.edit;
           }
 
-          $document.trigger('saved');
+          jsbin.$document.trigger('saved');
         },
         error: function (jqXHR) {
           onSaveError(jqXHR, null);

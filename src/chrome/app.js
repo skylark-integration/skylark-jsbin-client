@@ -1,9 +1,10 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-coder/editors/codemirror",
    "../jsbin",
    "./gist",
    "./analytics"
-],function ($,jsbin,Gist,analytics) {
+],function ($,CodeMirror,jsbin,Gist,analytics) {
   // if a gist has been requested, lazy load the gist library and plug it in
   if (/gist\/.*/.test(window.location.pathname)) {
     window.editors = editors; // needs to be global when the callback triggers to set the content
@@ -14,7 +15,7 @@ define([
     if (editors.ready) {
       loadGist();
     } else {
-      $document.on('jsbinReady', loadGist);
+      jsbin.$document.on('jsbinReady', loadGist);
     }
   }
 

@@ -1,8 +1,9 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-base/storage",
    "../jsbin",
    "./analytics"
-],function ($,jsbin,analytics) {
+],function ($,store,jsbin,analytics) {
     /*global jsbin, $, $body, $document, analytics, settings*/
     'use strict';
 
@@ -19,8 +20,8 @@ define([
     }
 
     if ($body.hasClass('toppanel') && jsbin.settings.gui.toppanel === false) {
-      $body.addClass('toppanel-close');
-      $body.removeClass('toppanel');
+      jsbin.$body.addClass('toppanel-close');
+      jsbin.$body.removeClass('toppanel');
     }
 
     // analytics for panel state
@@ -29,8 +30,8 @@ define([
     var removeToppanel = function() {
       jsbin.settings.gui.toppanel = false;
       settings.save();
-      $body.addClass('toppanel-close');
-      $body.removeClass('toppanel');
+      jsbin.$body.addClass('toppanel-close');
+      jsbin.$body.removeClass('toppanel');
 
       // $document.trigger('sizeeditors');
     };
@@ -38,19 +39,19 @@ define([
     var showToppanel = function() {
       jsbin.settings.gui.toppanel = true;
       settings.save();
-      $body.removeClass('toppanel-close');
-      $body.addClass('toppanel');
+      jsbin.$body.removeClass('toppanel-close');
+      jsbin.$body.addClass('toppanel');
     };
 
     var goSlow = function(e) {
-      $body.removeClass('toppanel-slow');
+      jsbin.$body.removeClass('toppanel-slow');
       if (e.shiftKey) {
-        $body.addClass('toppanel-slow');
+        jsbin.$body.addClass('toppanel-slow');
       }
     };
 
     $('.toppanel-logo').on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', function(e) {
-      $document.trigger('sizeeditors');
+      jsbin.$document.trigger('sizeeditors');
     });
 
     $('.toppanel-hide').click(function(event) {
@@ -128,7 +129,7 @@ define([
             // the timestamp when the user clicks the link, because we know
             // they'll land on the latest post
             try {
-              localStorage.lastpost = data.blog[count-1].timestamp;
+              store.localStorage.lastpost = data.blog[count-1].timestamp;
             } catch (e) {}
           });
         }

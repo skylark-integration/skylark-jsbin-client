@@ -2,7 +2,6 @@ define([
 	"skylark-jsbin-coder",
 	"./jsbin",
     "./chrome/font",
-    "./chrome/splitter",
     "./chrome/analytics",
     "./chrome/settings",
     "./render/saved-history-preview",

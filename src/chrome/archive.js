@@ -19,7 +19,7 @@ define([
         type: 'POST',
         url: jsbin.getURL({ withRevision: true }) + '/' + type,
         error: function () {
-          $document.trigger('tip', {
+          jsbin.$document.trigger('tip', {
             type: 'error',
             content: 'The ' + text + ' failed. If this continues, please can you file an issue?'
           });
@@ -27,7 +27,7 @@ define([
         success: function () {
           jsbin.state.metadata.archive = unarchive !== false;
           updateArchiveMenu();
-          $document.trigger('tip', {
+          jsbin.$document.trigger('tip', {
             type: 'notication',
             autohide: 5000,
             content: 'This bin is now ' + (unarchive === false ? 'restored from the archive.' : 'archived.')
