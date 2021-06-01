@@ -1,7 +1,7 @@
 define([
   "skylark-langx",
   "skylark-jquery",
-  "skylark-jsbin-chorme/analytics",
+  "skylark-jsbin-chrome/analytics",
    "../jsbin"
 ],function (langx,$,analytics,jsbin) {
   langx.mixin(analytics ,  {
