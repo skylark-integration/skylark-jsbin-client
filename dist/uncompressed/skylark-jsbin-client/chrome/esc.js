@@ -1,13 +1,8 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-chrome/hideOpen",
    "../jsbin"
-],function ($,jsbin) {
-  var loginVisible = false,
-      dropdownOpen = false,
-      keyboardHelpVisible = false,
-      urlHelpVisible = false,
-      sideNavVisible = false,
-      infocardVisible = false;
+],function ($, hideOpen, jsbin) {
 
   jsbin.$document.keydown(function (event) {
     if (event.which == 27) {//} || (keyboardHelpVisible && event.which == 191 && event.shiftKey && event.metaKey)) {
@@ -15,31 +10,6 @@ define([
     }
   });
 
-  function hideOpen() {
-    if (infocardVisible) {
-      $('#infocard').removeClass('open');
-      infocardVisible = false;
-    }
-    if (sideNavVisible) {
-      $body.removeClass('show-nav');
-      sideNavVisible = false;
-    }
-    if (urlHelpVisible) {
-      $body.removeClass('urlHelp');
-      urlHelpVisible = false;
-      analytics.closeMenu('help');
-    } else if (keyboardHelpVisible) {
-      $body.removeClass('keyboardHelp');
-      keyboardHelpVisible = false;
-      analytics.closeMenu('keyboardHelp');
-    } else if (dropdownOpen) {
-      closedropdown();
-    } else if (loginVisible) {
-      $('#login').hide();
-      analytics.closeMenu('login');
-      loginVisible = false;
-    }
-  }
 
   jsbin.$document.delegate('.modal', 'click', function (event) {
     if ($(event.target).is('.modal')) {

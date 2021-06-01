@@ -1,14 +1,11 @@
 define([
+  "skylark-langx",
   "skylark-jquery",
+  "skylark-jsbin-chorme/analytics",
    "../jsbin"
-],function ($,jsbin) {
-  var analytics =  {
-    track: function (category, action, label) { // , value
-      window.ga && ga('send', 'event', category, action, label);
-    },
-    experiment: function (type) {
-      analytics.track('experiment', type);
-    },
+],function (langx,$,analytics,jsbin) {
+  langx.mixin(analytics ,  {
+
     universalEditor: function (value) {
       analytics.track('menu', 'universalEditor', value);
     },
@@ -52,17 +49,7 @@ define([
     openFromAvatar: function () {
       analytics.track('menu', 'select', 'open via avatar');
     },
-    openMenu: function (label) {
-      analytics.track('menu', 'open', label);
-    },
-    closeMenu: function (label) {
-      analytics.track('menu', 'close', label);
-    },
-    selectMenu: function (item) {
-      if (item) {
-        analytics.track('menu', 'select', item);
-      }
-    },
+
     share: function (action, label) {
       analytics.track('share', action, label);
     },
@@ -135,12 +122,12 @@ define([
     welcomePanelLink: function (url) {
       analytics.track('welcome-panel-link', url);
     }
-  };
+  });
 
   // misses the asset upload one
   $('a[data-pro="true"]').on('click', function () {
     analytics.track('try-pro', $(this).text());
   });
 
-  return jsbin.analytics = analytics;
+  return  analytics;
 });

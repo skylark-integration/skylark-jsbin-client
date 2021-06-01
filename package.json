@@ -23,6 +23,7 @@
     "skylark-jquery": "git+https://github.com/skylark-integration/skylark-jquery.git#master",
     "skylark-jsbin-base": "git+https://github.com/skylark-integration/skylark-jsbin-base.git",
     "skylark-jsbin-coder": "git+https://github.com/skylark-integration/skylark-jsbin-coder.git",
+    "skylark-jsbin-chrome": "git+https://github.com/skylark-integration/skylark-jsbin-chrome.git",
     "skylark-langx": "git+https://github.com/skylark-langx/skylark-langx.git#master"
   },
   "engines": {

@@ -1,8 +1,9 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-chrome/hideOpen",
    "../jsbin",
    "./analytics"
-],function ($,jsbin,analytics) {
+],function ($,hideOpen,jsbin,analytics) {
   if ('EventSource' in global) {
     return setupInfocard()
   } else {
