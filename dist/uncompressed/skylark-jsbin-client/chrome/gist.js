@@ -83,7 +83,7 @@ define([
         if (jsbin.state.processors) {
           panels.source = jsbin.state.processors;
           Object.keys(panels.source).forEach(function (key) {
-            panels.source[key] = jsbin.panels.panels[key].getCode();
+            panels.source[key] = panels.named[key].getCode();
           });
         }
 

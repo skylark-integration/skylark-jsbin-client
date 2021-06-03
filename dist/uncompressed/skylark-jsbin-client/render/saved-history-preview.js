@@ -1,7 +1,8 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-coder/editors/panels",
    "../jsbin"
-],function ($,jsbin) {
+],function ($,panels,jsbin) {
   /*global jsbin, $, $document, analytics*/
   'use strict';
   if (!jsbin.user || !jsbin.user.name || jsbin.embed) {
@@ -14,7 +15,7 @@ define([
       $history; // set in hookUserHistory()
 
   jsbin.$document.on('history:open', function () {
-    if ($history && jsbin.panels.getVisible().length === 0) {
+    if ($history && panels.getVisible().length === 0) {
       $history.appendTo('main');
     }
   }).on('history:close', function () {
@@ -151,7 +152,7 @@ define([
       event.preventDefault();
       event.stopImmediatePropagation(); // prevent further delegates
       if ($this.data('toggle') === 'history') {
-        jsbin.panels.allEditors(function (panel) {
+        panels.allEditors(function (panel) {
           if (panel.editor.getCode().trim().length) {
             panel.show();
           }

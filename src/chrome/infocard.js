@@ -1,10 +1,13 @@
 define([
   "skylark-jquery",
   "skylark-jsbin-chrome/hideOpen",
+  "skylark-jsbin-chrome/spinner",
+  "skylark-jsbin-chrome/prettyDate",
+  "skylark-jsbin-coder/editors/panels",
    "../jsbin",
    "./analytics"
-],function ($,hideOpen,jsbin,analytics) {
-  if ('EventSource' in global) {
+],function ($,hideOpen,spinner,prettyDate, panels,jsbin,analytics) {
+  if ('EventSource' in window) {
     return setupInfocard()
   } else {
     $.getScript(jsbin['static'] + '/js/vendor/eventsource.js', setupInfocard);
@@ -22,7 +25,7 @@ define([
     var $header = $template.find('header');
     var canvas = $header.find('canvas')[0];
     var s = spinner(canvas);
-    var htmlpanel = jsbin.panels.named.html;
+    var htmlpanel = panels.named.html;
     var viewers = 0;
     var es = null;
 
@@ -150,7 +153,7 @@ define([
       var cursor = null;
       var cm = htmlpanel.editor;
       var selected = cm.somethingSelected();
-      if (jsbin.panels.named.html.visible) {
+      if (panels.named.html.visible) {
         if (selected) {
           state = cm.listSelections();
         }
@@ -160,7 +163,7 @@ define([
       htmlpanel.setCode(result);
 
       // then restore
-      if (jsbin.panels.named.html.visible) {
+      if (panels.named.html.visible) {
         if (!jsbin.mobile) cm.setCursor(cursor);
         if (selected) {
           cm.setSelections(state);
@@ -318,6 +321,6 @@ define([
 
     initHandlers();
     updateInfoCard();
-    $document.bind('saved', updateInfoCard);
+    jsbin.$document.bind('saved', updateInfoCard);
   }
 });

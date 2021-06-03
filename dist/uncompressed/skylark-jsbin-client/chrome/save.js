@@ -40,7 +40,7 @@ define([
   };
 
   function getTagContent(tag) {
-    var html = jsbin.panels.named.html.getCode();
+    var html = panels.named.html.getCode();
     var result = '';
 
     // if we don't have the tag, bail with an empty string
@@ -159,7 +159,7 @@ define([
       }
     }
 
-    var currentHTML = jsbin.panels.named.html.getCode();
+    var currentHTML = panels.named.html.getCode();
     if (lastHTML !== currentHTML) {
       lastHTML = currentHTML;
 
@@ -249,7 +249,7 @@ define([
 
     jsbin.$document.bind('jsbinReady', function () {
       jsbin.state.changed = false;
-      jsbin.panels.allEditors(function (panel) {
+      panels.allEditors(function (panel) {
         panel.on('processor', function () {
           // if the url doesn't match the root - i.e. they've actually saved something then save on processor change
           if (jsbin.root !== jsbin.getURL()) {
@@ -287,7 +287,7 @@ define([
 
         var panelId = data.panelId;
 
-        jsbin.panels.savecontent();
+        panels.savecontent();
 
         if (saving.inprogress()) {
           // queue up the request and wait
@@ -396,7 +396,7 @@ define([
     event.preventDefault();
 
     // save our panel layout - assumes our user is happy with this layout
-    jsbin.panels.save();
+    panels.save();
     analytics.clone();
 
     var $form = setupform('save,new');
@@ -454,8 +454,8 @@ define([
     // create form and post to it
     var $form = setupform(method);
     // save our panel layout - assumes our user is happy with this layout
-    jsbin.panels.save();
-    jsbin.panels.saveOnExit = true;
+    panels.save();
+    panels.saveOnExit = true;
 
     var data = $form.serializeArray().reduce(function(obj, data) {
       obj[data.name] = data.value;

@@ -34,7 +34,7 @@ define([
     // select the right panels
     // hideOpen();
     $sharepanels.prop('checked', false);
-    jsbin.panels.getVisible().forEach(function (p) {
+    panels.getVisible().forEach(function (p) {
       $sharepanels.filter('[value="' + (mapping[p.id] || p.id) + '"]').prop('checked', true);
     });
 
@@ -167,7 +167,7 @@ define([
     var code = ''
     var ext = '';
 
-    code = jsbin.panels.named.html.getCode().trim();
+    code = panels.named.html.getCode().trim();
 
     if (code) {
       ext = processors[jsbin.state.processors.html || 'html'].extensions[0];
@@ -178,7 +178,7 @@ define([
       }
     }
 
-    if (jsbin.panels.named.css.getCode().trim()) {
+    if (panels.named.css.getCode().trim()) {
       ext = processors[jsbin.state.processors.css || 'css'].extensions[0];
       if (ext !== 'css') {
         directLinksHTML.push('<a target="_blank" href="' + url + '.css">css</a>');
@@ -186,7 +186,7 @@ define([
       directLinksHTML.push('<a target="_blank" href="' + url + '.' + ext + '">' + ext + '</a>');
     }
 
-    code = jsbin.panels.named.javascript.getCode().trim();
+    code = panels.named.javascript.getCode().trim();
 
     if (code) {
       ext = processors[jsbin.state.processors.javascript || 'javascript'].extensions[0];

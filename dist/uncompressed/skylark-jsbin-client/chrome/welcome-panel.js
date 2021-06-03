@@ -19,7 +19,7 @@ define([
       store.localStorage.setItem('settings', JSON.stringify(jsbin.settings));
     }
 
-    if ($body.hasClass('toppanel') && jsbin.settings.gui.toppanel === false) {
+    if (jsbin.$body.hasClass('toppanel') && jsbin.settings.gui.toppanel === false) {
       jsbin.$body.addClass('toppanel-close');
       jsbin.$body.removeClass('toppanel');
     }

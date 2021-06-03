@@ -16,7 +16,6 @@ define([
     "./chrome/navigation",
     "./chrome/file-drop",
     "./chrome/gist",
-    "./chrome/spinner",
     "./chrome/infocard",
     "./chrome/last-bin",
     "./chrome/archive",

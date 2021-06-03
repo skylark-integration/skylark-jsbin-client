@@ -1,4 +1,8 @@
-define([],function(){
+define([
+  "skylark-jquery",
+  "skylark-jsbin-coder/editors/panels",
+   "../jsbin"
+],function ($,panels,jsbin) {
   // This simple script allows the client to take control of the device
   // and send a spike to reload the browser.
   // http://www.youtube.com/watch?v=mIq9jFdEfZo#t=2m03 "Spike"
@@ -182,8 +186,8 @@ define([],function(){
    * update the appropriate panel
    */
   function codecastStream() {
-    if (!(jsbin && jsbin.panels && jsbin.panels.panels)) return;
-    var editors = jsbin.panels.panels;
+    if (!(jsbin && panels && panels.named)) return;
+    var editors = panels.named;
 
     function setCode(event) {
       var panelId = event.type;

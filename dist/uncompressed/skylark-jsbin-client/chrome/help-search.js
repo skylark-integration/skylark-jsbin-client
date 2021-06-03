@@ -10,7 +10,7 @@ define([
     var search = $('#helpsearch');
     var position = -1;
 
-    search.on('input', throttle(function () {
+    search.on('input', jsbin.throttle(function () {
       if (searchTerms.length === 0) {
         $.ajax({
           url: '/help/search.json?' + (new Date()).toString().split(' ').slice(0, 4).join('-'),

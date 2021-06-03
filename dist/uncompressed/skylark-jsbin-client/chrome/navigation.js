@@ -16,9 +16,9 @@ define([
       localStorage.setItem('saved-css', panels.named.css.getCode());
 
       localStorage.setItem('saved-processors', JSON.stringify({
-        javascript: jsbin.panels.named.javascript.processor.id,
-        html: jsbin.panels.named.html.processor.id,
-        css: jsbin.panels.named.css.processor.id,
+        javascript: panels.named.javascript.processor.id,
+        html: panels.named.html.processor.id,
+        css: panels.named.css.processor.id,
       }));
 
       jsbin.$document.trigger('tip', {
@@ -80,7 +80,7 @@ define([
 
     hideOpen();
 
-    jsbin.panels.hideAll();
+    panels.hideAll();
     return false;
   });
 
@@ -121,7 +121,7 @@ define([
     });
     $('#sharemenu').bind('open', function () {
       $panelCheckboxes.attr('checked', false);
-      jsbin.panels.getVisible().forEach(function (panel) {
+      panels.getVisible().forEach(function (panel) {
         $panelCheckboxes.filter('[data-panel="' + panel.id + '"]').prop('checked', true).change();
       });
 
@@ -132,7 +132,7 @@ define([
 
   $('#jsbinurl').click(function (e) {
     setTimeout(function () {
-      jsbin.panels.named.live.hide();
+      panels.named.live.hide();
     }, 0);
   });
 
@@ -187,7 +187,7 @@ define([
   });
 
   $('.code.panel > .label > span.name').dblclick(function () {
-    jsbin.panels.allEditors(function (panel) {
+    panels.allEditors(function (panel) {
       var lineNumbers = !panel.editor.getOption('lineNumbers');
       panel.editor.setOption('lineNumbers', lineNumbers);
       jsbin.settings.editor.lineNumbers = lineNumbers;
@@ -199,7 +199,7 @@ define([
     var i, key;
     analytics.createNew();
     // FIXME this is out and out [cr]lazy....
-    jsbin.panels.savecontent = function(){};
+    panels.savecontent = function(){};
     for (i = 0; i < store.sessionStorage.length; i++) {
       key = store.sessionStorage.key(i);
       if (key.indexOf('jsbin.content.') === 0) {
@@ -210,16 +210,16 @@ define([
     // clear out the write checksum too
     store.sessionStorage.removeItem('checksum');
 
-    jsbin.panels.saveOnExit = false;
+    panels.saveOnExit = false;
 
     // first try to restore their default panels
-    jsbin.panels.restore();
+    panels.restore();
 
     // if nothing was shown, show html & live
     setTimeout(function () {
-      if (jsbin.panels.getVisible().length === 0) {
-        jsbin.panels.named.html.show();
-        jsbin.panels.named.live.show();
+      if (panels.getVisible().length === 0) {
+        panels.named.html.show();
+        panels.named.live.show();
       }
       window.location = jsbin.root;
     }, 0);
@@ -336,7 +336,7 @@ define([
     // if not - insert
     // <meta name="description" content="" />
     // if meta description is in the HTML, highlight it
-    var editor = jsbin.panels.named.html,
+    var editor = panels.named.html,
         cm = editor.editor,
         html = editor.getCode();
 
@@ -489,13 +489,13 @@ define([
   }
 
   $('#skipToEditor').on('click keypress', function () {
-    var first = (jsbin.panels.getVisible() || ['html']).shift();
+    var first = (panels.getVisible() || ['html']).shift();
     if (jsbin.settings.editor.simple || jsbin.mobile) {
       $('#' + first.id).focus();
     } else if (first) {
       first.editor.focus();
     } else {
-      jsbin.panels.named.html.editor.focus();
+      panels.named.html.editor.focus();
     }
     return false;
   });
