@@ -5,8 +5,9 @@ define([
   "skylark-jsbin-coder/editors/panels",
    "../jsbin",
    "./analytics",
-   "./archive"
-],function ($,store,hideOpen, panels,jsbin,analytics, archive) {
+   "./archive",
+   "./settings"
+],function ($,store,hideOpen, panels,jsbin,analytics, archive,settings) {
   var $startingpoint = $('a.startingpoint').click(function (event) {
     event.preventDefault();
     if (localStorage) {
@@ -141,7 +142,7 @@ define([
     if (panels.named.console.visible) {
       panels.named.console.render(true);
     } else {
-      renderLivePreview(true);
+      panels.renderLivePreview(true);
     }
     return false;
   });

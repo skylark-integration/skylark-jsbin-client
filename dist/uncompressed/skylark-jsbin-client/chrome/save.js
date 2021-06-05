@@ -428,9 +428,9 @@ define([
     }
 
     $form.find('input[name=settings]').val(JSON.stringify(settings));
-    $form.find('input[name=javascript]').val(editors.javascript.getCode());
-    $form.find('input[name=css]').val(editors.css.getCode());
-    $form.find('input[name=html]').val(editors.html.getCode());
+    $form.find('input[name=javascript]').val(panels.named.javascript.getCode());
+    $form.find('input[name=css]').val(panels.named.css.getCode());
+    $form.find('input[name=html]').val(panels.named.html.getCode());
     $form.find('input[name=method]').val(method);
     $form.find('input[name=checksum]').val(jsbin.state.checksum);
 

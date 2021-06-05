@@ -264,14 +264,14 @@ define([
 
     function initHandlers() {
       $('a.more').add($header).on('mousedown touchstart', function (e) {
-        infocardVisible = !infocardVisible; // this is hack :-\
+        jsbin.infocardVisible = !jsbin.infocardVisible; // this is hack :-\
         hideOpen();
         e.preventDefault();
         analytics.infocard('click', 'no-result');
         var toTrigger;
         $template.toggleClass(function (index, klass) {
           toTrigger = klass.indexOf('open') === -1 ? 'open' : 'close';
-          infocardVisible = toTrigger === 'open';
+          jsbin.infocardVisible = toTrigger === 'open';
           return 'open';
         }).trigger(toTrigger);
       });

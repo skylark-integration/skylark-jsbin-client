@@ -31,4 +31,6 @@ define([
       });
     }
   };
+
+  return jsbin.chrome.settings = settings;
 });

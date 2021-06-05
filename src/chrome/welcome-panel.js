@@ -2,8 +2,9 @@ define([
   "skylark-jquery",
   "skylark-jsbin-base/storage",
    "../jsbin",
-   "./analytics"
-],function ($,store,jsbin,analytics) {
+   "./analytics",
+   "./settings"
+],function ($,store,jsbin,analytics,settings) {
     /*global jsbin, $, $body, $document, analytics, settings*/
     'use strict';
 
