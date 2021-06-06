@@ -1,8 +1,9 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-processors",
   "skylark-jsbin-coder/editors/panels",
    "../jsbin"
-],function ($,panels,jsbin) {
+],function ($,processors,panels,jsbin) {
   'use strict';
   /*globals $, panels, saveChecksum, jsbin, $document, documentTitle*/
 

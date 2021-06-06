@@ -1,9 +1,10 @@
 define([
   "skylark-jquery",
+  "skylark-jsbin-bintofile",
   "skylark-jsbin-processors",
   "skylark-jsbin-coder/editors/panels",
    "../jsbin"
-],function ($,processors,panels,jsbin) {
+],function ($,binToFile, processors,panels,jsbin) {
     /*global $:true, jsbin:true, processors:true, $document*/
     'use strict';
 
@@ -58,20 +59,20 @@ define([
         files: {}
       };
 
-      var panels = {
+      var defers = {
         html: panels.named.html.render(),
         javascript: panels.named.javascript.render(),
         css: panels.named.css.render()
       };
 
-      Promise.all(panels).then(function (panels) { // RSVP.hash
+      Promise.all(defers).then(function (codes) { // RSVP.hash
         // Build a file name
-        Object.keys(panels).forEach(function (key) {
+        Object.keys(codes).forEach(function (key) {
           var ext = processors[key].extensions ? processors[key].extensions[0] : key;
           var file = ['jsbin', (jsbin.state.code || 'untitled'), ext].join('.');
-          if (panels[key].length) {
+          if (codes[key].length) {
             gist.files[file] = {
-              content: panels[key]
+              content: codes[key]
             };
           }
         });
