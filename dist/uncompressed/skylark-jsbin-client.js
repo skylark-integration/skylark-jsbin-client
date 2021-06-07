@@ -2541,14 +2541,19 @@ define('skylark-jsbin-client/chrome/gist',[
         files: {}
       };
 
-      var defers = {
-        html: panels.named.html.render(),
-        javascript: panels.named.javascript.render(),
-        css: panels.named.css.render()
-      };
+      var defers = [
+        panels.named.html.render(),
+        panels.named.javascript.render(),
+        panels.named.css.render()
+      ];
 
-      Promise.all(defers).then(function (codes) { // RSVP.hash
+      Promise.all(defers).then(function (results) { // RSVP.hash
         // Build a file name
+        var codes = {
+            html : results[0],
+            javascript : results[1],
+            css : results[2]
+        };
         Object.keys(codes).forEach(function (key) {
           var ext = processors[key].extensions ? processors[key].extensions[0] : key;
           var file = ['jsbin', (jsbin.state.code || 'untitled'), ext].join('.');
@@ -2570,7 +2575,7 @@ define('skylark-jsbin-client/chrome/gist',[
           });
         }
 
-        var index = binToFile(panels);
+        var index = binToFile(codes);
 
         gist.files['index.html'] = {
           content: index
@@ -2626,8 +2631,6 @@ define('skylark-jsbin-client/chrome/gist',[
     });
 
     return Gist;
-
-
 });
 define('skylark-jsbin-chrome/spinner',[
   "skylark-jquery",
